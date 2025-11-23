@@ -196,37 +196,57 @@ class Pokemon {
     }
 }
 
-resetTeamButton.onclick = function() {
-    current_slot = 0;
-    teamArray = [];
-    for (let i = 0; i < 6; i++) {
-        document.getElementById("slot-" + i).innerHTML = `<p>Empty</p>`;
+function getCardHTML(pokemon, index) {
+    if (!pokemon) {
+        return `<p>Empty</p>`;
     }
+    return `
+        <div class="filled">
+            <button class="remove-btn" onclick="removePokemon(${index}); event.stopPropagation()">X</button>
+            <img src="${pokemon.sprite}" alt="${pokemon.name}">
+            <p>${pokemon.name.charAt(0).toUpperCase() + pokemon.name.slice(1)}</p>
+            <p>${pokemon.type1.charAt(0).toUpperCase() + pokemon.type1.slice(1)}${pokemon.type2 ? " / " + pokemon.type2.charAt(0).toUpperCase() + pokemon.type2.slice(1) : ""}</p>
+        </div>
+    `;
 }
 
 searchButton.onclick = function() {   
-    var pokemonName = document.getElementById("pokemon-input").value;
+    // Replace spaces with hyphens for multi-word Pokemon names
+    // NOTE: Needs additional work !!!! //
+    var pokemonName = document.getElementById("pokemon-input").value.trim().replace(/\s+/g, '-');
+    
+    // Stop if input is empty
+    if (!pokemonName) return;
+
+    // Runs the fetch and adds to team
     getPokemonData(pokemonName).then(data => {
         if (data) {
             // Handles single-type Pokemon individually
             let type2 = data.types[1] ? data.types[1].type.name : null;
-            teamArray[current_slot] = new Pokemon(
+            
+            // Creates the Pokemon and adds to team array
+            const newPokemon = new Pokemon(
                 data.name, 
                 data.types[0].type.name, 
                 type2, 
                 data.sprites.front_default
             );
 
-            document.getElementById("slot-" + current_slot).innerHTML = `
-                <img src="${data.sprites.front_default}" alt="${data.name}">
-                <p>${data.name.charAt(0).toUpperCase() + data.name.slice(1)}</p>
-                <p>${data.types.map(t => t.type.name.charAt(0).toUpperCase() + t.type.name.slice(1)).join(" / ")}</p>
-            `;
+            teamArray[current_slot] = newPokemon;
+
+            // Calls function up date the HTML card for the team member
+            document.getElementById("slot-" + current_slot).className = "poke-slot filled";
+            document.getElementById("slot-" + current_slot).innerHTML = getCardHTML(newPokemon, current_slot);
+            document.getElementById("pokemon-input").value = "";
+            
+            // Increment slot and disable input if team is full
             current_slot += 1;
             if (current_slot > 5) {
                 document.getElementById("pokemon-input").disabled = true;
                 searchButton.disabled = true;
             }
+        } else {
+            alert("Pokémon not found. Please check the name and try again.");
         }
     });
 }
@@ -258,12 +278,8 @@ function removePokemon(index) {
 }
 
 function updateTeamDisplay() {
-    let teamTotal = teamArray.length;
-    for (let i = 0; i < teamTotal; i++) {
-        document.getElementById("slot-" + i).innerHTML = `
-            <img src="${teamArray[i].sprite}" alt="${teamArray[i].name}">
-            <p>${teamArray[i].name.charAt(0).toUpperCase() + teamArray[i].name.slice(1)}</p>
-            <p>${teamArray[i].type1.charAt(0).toUpperCase() + teamArray[i].type1.slice(1)}${teamArray[i].type2 ? " / " + teamArray[i].type2.charAt(0).toUpperCase() + teamArray[i].type2.slice(1) : ""}</p>    
-        `;
+    for (let i = 0; i < 6; i++) {
+        const pokemon = teamArray[i];
+        document.getElementById("slot-" + i).innerHTML = getCardHTML(pokemon, i);
     }
 }

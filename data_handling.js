@@ -4,6 +4,21 @@ var resetTeamButton = document.getElementById("reset-btn");
 var analyzeButton = document.getElementById("analyze");
 var userInput = document.getElementById("pokemon-input");
 
+// API Call for autocomplete suggestions
+async function loadAutocomplete() {
+    const response = await fetch("https://pokeapi.co/api/v2/pokemon?limit=10000");
+    const data = await response.json();
+
+    const datalist = document.getElementById("pokemon-suggestions");
+    data.results.forEach(pokemon => {
+        const option = document.createElement("option");
+        option.value = pokemon.name;
+        datalist.appendChild(option);
+    });
+}
+
+// Load autocomplete suggestions on page load
+window.onload = loadAutocomplete();
 // Global variables
 var current_slot = 0;
 var teamArray = [];
@@ -209,15 +224,51 @@ class Pokemon {
         }
     }
 
-    htmlCardData = `
+    get htmlCardData() { 
+        return `
         <img src="${this.sprite}" alt="${this.name}">
         <p>${this.getProperName()}</p>
         <p>${this.type1.charAt(0).toUpperCase() + this.type1.slice(1)}${this.type2 ? " / " + this.type2.charAt(0).toUpperCase() + this.type2.slice(1) : ""}</p>
-    `;
+        `;
+    }
 
     generateHTMLCard() {
-        document.getElementById("slot-" + current_slot).innerHTML = this.htmlCardData;
-        document.getElementById("slot-" + current_slot).className = "poke-slot filled";
+        let slot = document.getElementById("slot-" + current_slot);
+        slot.innerHTML = this.htmlCardData;
+        slot.className = "poke-slot filled";
+        slot.onclick = function() {
+            
+        }
+    }
+}
+
+function removePokemon(index) {
+    teamArray.splice(index, 1);
+    updateTeamUI();
+}
+
+function updateTeamUI() {
+    for (let i = 0; i < 6; i++) {
+        let slot = document.getElementById("slot-" + i);
+        if (i < teamArray.length) {
+            let pokemon = teamArray[i];
+            slot.innerHTML = pokemon.htmlCardData;
+            slot.className = "poke-slot filled";
+            slot.onclick = function() {
+                removePokemon(i);
+            };
+        } else {
+            slot.innerHTML = `<p>Empty</p>`;
+            slot.className = "poke-slot";
+            slot.onclick = null;
+        }
+    }
+    if (teamArray.length >= 6) {
+        searchButton.disabled = true;
+        userInput.disabled = true;
+    } else {
+        searchButton.disabled = false;
+        userInput.disabled = false;
     }
 }
 
@@ -246,18 +297,17 @@ async function apiCall(name) {
 }
 
 // DOM manipulation and event handlers
-searchButton.onclick = function() {
+searchButton.onclick = async function() {
     let add_pkmn = normalizeName(document.getElementById("pokemon-input").value);
-    apiCall(add_pkmn).then(data => { teamArray.push(new Pokemon(data)); });
-
-    // Deactivate search bar and button if team is full
-    if (teamArray.length >= 6) {
-        searchButton.disabled = true;
-        userInput.disabled = true;
+    // await function to ensure data is fetched before proceeding.
+    const data = await apiCall(add_pkmn);
+    
+    if (data) {
+        teamArray.push(new Pokemon(data));
+        updateTeamUI();
+    } else {
+        alert("Pokémon not found. Please check the name and try again.");
     }
-
-    // Increment current slot for next addition
-    current_slot += 1;
 }
 
 resetTeamButton.onclick = function() {

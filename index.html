@@ -123,6 +123,37 @@
         
         .poke-slot.filled .remove-btn { display: block; }
 
+        .poke-slot.filled:hover {
+            border-color: var(--pokedex-red); 
+            background-color: #ffe6e6;        
+        }
+
+        .poke-slot.filled:hover::after {
+            content: "REMOVE";
+            position: absolute;
+            top: 0; 
+            left: 0; 
+            width: 100%; 
+            height: 100%;
+            
+            /* Create a semi-transparent red overlay */
+            background-color: rgba(220, 10, 45, 0.8); 
+            color: white;
+            
+            /* Center the text */
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            
+            /* Style the text */
+            font-weight: bold;
+            font-size: 1.5rem;
+            letter-spacing: 2px;
+            
+            /* Match the card's rounded corners */
+            border-radius: 10px; 
+        }
+
         /* Analysis Dashboard (Bottom Half) */
         .analysis-section {
             padding: 30px;
@@ -173,7 +204,8 @@
         </header>
 
         <section class="controls">
-            <input type="text" id="pokemon-input" placeholder="Enter Pokemon Name (e.g., Garchomp)">
+            <input type="text" id="pokemon-input" list="pokemon-suggestions">
+            <datalist id="pokemon-suggestions"></datalist>
             <button id="add-btn" class="team-controls">Add to Team</button>
             <button id="analyze" class="team-controls">Analyze team</button>
             <button id="reset-btn" class="team-controls">Reset Team</button>
